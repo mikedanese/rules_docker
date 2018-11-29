@@ -64,6 +64,12 @@ def repositories():
     """Download dependencies of container rules."""
     excludes = native.existing_rules().keys()
 
+    DOCKER_SIX_PATCHES = [
+        'sed -i "s/@six/@six_docker/g" ',
+        'sed -i "/six.*not in excludes/d" ',
+        'sed -i "s/name = .six./name = \'six_docker\'/g" ',
+    ]
+
     if "puller" not in excludes:
         http_file(
             name = "puller",
@@ -89,6 +95,7 @@ def repositories():
                      CONTAINERREGISTRY_RELEASE + ".tar.gz")],
             sha256 = "10fb9ffa1dde14c81f5c12593666bf1d9e9f53727b8cda9abeb0012d08e57fd1",
             strip_prefix = "containerregistry-" + CONTAINERREGISTRY_RELEASE[1:],
+            patch_cmds = [cmd + "def.bzl BUILD.bazel" for cmd in DOCKER_SIX_PATCHES],
         )
 
     # TODO(nichow): Remove after bazel 0.17.0 is released
@@ -120,10 +127,10 @@ py_library(
         )
 
     # Used by oauth2client
-    if "six" not in excludes:
+    if "six_docker" not in excludes:
         # TODO(mattmoor): Is there a clean way to override?
         http_archive(
-            name = "six",
+            name = "six_docker",
             url = "https://pypi.python.org/packages/source/s/six/six-1.9.0.tar.gz",
             sha256 = "e24052411fc4fbd1f672635537c3fc2330d9481b18c0317695b46259512c91d5",
             strip_prefix = "six-1.9.0/",
@@ -159,7 +166,7 @@ py_library(
    visibility = ["//visibility:public"],
    deps = [
      "@httplib2//:httplib2",
-     "@six//:six",
+     "@six_docker//:six",
    ]
 )""",
         )
